@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask API Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .config {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .config input {
+            width: 300px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .auth-status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .auth-status.logged-in {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .auth-status.logged-out {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .logout-btn {
+            background: #dc3545;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .log-area {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 3px solid #667eea;
+            padding-left: 10px;
+        }
+
+        .log-entry.success {
+            border-left-color: #28a745;
+        }
+
+        .log-entry.error {
+            border-left-color: #dc3545;
+        }
+
+        .log-entry.info {
+            border-left-color: #17a2b8;
+        }
+
+        .tasks-list {
+            margin-top: 15px;
+        }
+
+        .task-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .task-item.overdue {
+            border-left-color: #dc3545;
+        }
+
+        .task-item.completed {
+            border-left-color: #28a745;
+        }
+
+        .task-item h4 {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .task-item p {
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .badge.high {
+            background: #dc3545;
+            color: white;
+        }
+
+        .badge.medium {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .badge.low {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge.overdue {
+            background: #dc3545;
+            color: white;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .clear-log-btn {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+
+        .clear-log-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Flask Productivity API Tester</h1>
+        
+        <div class="config">
+            <label for="baseUrl">API Base URL:</label>
+            <input type="text" id="baseUrl" value="http://localhost:8000" placeholder="http://localhost:8000">
+            <button onclick="testConnection()" style="margin-left: 10px; padding: 8px 16px; font-size: 14px;">Test Connection</button>
+        </div>
+
+        <div id="authStatus" class="auth-status logged-out">
+            Status: Not logged in
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="section">
+            <h2>🔐 Authentication</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3>Register</h3>
+                    <div class="form-group">
+                        <label>Username:</label>
+                        <input type="text" id="registerUsername" placeholder="Enter username">
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="registerPassword" placeholder="Enter password">
+                    </div>
+                    <button onclick="register()">Register</button>
+                </div>
+
+                <div>
+                    <h3>Login</h3>
+                    <div class="form-group">
+                        <label>Username:</label>
+                        <input type="text" id="loginUsername" placeholder="Enter username">
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="loginPassword" placeholder="Enter password">
+                    </div>
+                    <button onclick="login()">Login</button>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Management Section -->
+        <div class="section">
+            <h2>📝 Task Management</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3>Create Task</h3>
+                    <div class="form-group">
+                        <label>Title:</label>
+                        <input type="text" id="taskTitle" placeholder="Task title" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description:</label>
+                        <textarea id="taskDescription" placeholder="Task description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority:</label>
+                        <select id="taskPriority">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Deadline (YYYY-MM-DD):</label>
+                        <input type="date" id="taskDeadline">
+                    </div>
+                    <button onclick="createTask()">Create Task</button>
+                </div>
+
+                <div>
+                    <h3>Get Tasks</h3>
+                    <button onclick="getTasks()">Fetch All Tasks</button>
+                    <div id="tasksList" class="tasks-list"></div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3>Update Task</h3>
+                    <div class="form-group">
+                        <label>Task ID:</label>
+                        <input type="text" id="updateTaskId" placeholder="Enter task ID">
+                    </div>
+                    <div class="form-group">
+                        <label>Status:</label>
+                        <select id="updateStatus">
+                            <option value="">Keep current</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority:</label>
+                        <select id="updatePriority">
+                            <option value="">Keep current</option>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                    <button onclick="updateTask()">Update Task</button>
+                </div>
+
+                <div>
+                    <h3>Delete Task</h3>
+                    <div class="form-group">
+                        <label>Task ID:</label>
+                        <input type="text" id="deleteTaskId" placeholder="Enter task ID">
+                    </div>
+                    <button onclick="deleteTask()" style="background: #dc3545;">Delete Task</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <div class="section">
+            <h2>📊 Dashboard</h2>
+            <button onclick="getDashboard()">Get Dashboard Stats</button>
+            <div id="dashboardStats" class="dashboard-stats"></div>
+        </div>
+
+        <!-- Logging Section -->
+        <div class="section">
+            <h2>📋 Activity Log</h2>
+            <button class="clear-log-btn" onclick="clearLog()">Clear Log</button>
+            <div id="logArea" class="log-area"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL_KEY = 'api_base_url';
+        let baseUrl = localStorage.getItem(API_BASE_URL_KEY) || 'http://localhost:8000';
+        const TOKEN_KEY = 'jwt_token';
+
+        // Initialize
+        document.getElementById('baseUrl').value = baseUrl;
+        updateAuthStatus();
+        loadToken();
+
+        // Update base URL
+        document.getElementById('baseUrl').addEventListener('change', (e) => {
+            baseUrl = e.target.value;
+            localStorage.setItem(API_BASE_URL_KEY, baseUrl);
+            log('info', `API Base URL updated to: ${baseUrl}`);
+        });
+
+        function getToken() {
+            return localStorage.getItem(TOKEN_KEY);
+        }
+
+        function saveToken(token) {
+            localStorage.setItem(TOKEN_KEY, token);
+            updateAuthStatus();
+        }
+
+        function removeToken() {
+            localStorage.removeItem(TOKEN_KEY);
+            updateAuthStatus();
+        }
+
+        function updateAuthStatus() {
+            const statusDiv = document.getElementById('authStatus');
+            const token = getToken();
+            if (token) {
+                statusDiv.className = 'auth-status logged-in';
+                statusDiv.textContent = 'Status: Logged in ✓';
+            } else {
+                statusDiv.className = 'auth-status logged-out';
+                statusDiv.textContent = 'Status: Not logged in';
+            }
+        }
+
+        function log(type, message, data = null) {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            
+            let logText = `[${timestamp}] ${message}`;
+            if (data) {
+                logText += '\n' + JSON.stringify(data, null, 2);
+            }
+            
+            logEntry.textContent = logText;
+            logArea.appendChild(logEntry);
+            logArea.scrollTop = logArea.scrollHeight;
+            
+            // Also log to browser console
+            console.log(`[${type.toUpperCase()}]`, message, data || '');
+        }
+
+        function clearLog() {
+            document.getElementById('logArea').innerHTML = '';
+            log('info', 'Log cleared');
+        }
+
+        async function makeRequest(url, method, body = null, requiresAuth = false) {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            if (requiresAuth) {
+                const token = getToken();
+                if (!token) {
+                    const error = 'No authentication token found. Please login first.';
+                    alert('❌ Error: ' + error);
+                    log('error', error);
+                    throw new Error(error);
+                }
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const options = {
+                method,
+                headers
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            log('info', `${method} ${url}`, body);
+
+            try {
+                const response = await fetch(url, options);
+                
+                // Handle 403 Forbidden specifically
+                if (response.status === 403) {
+                    const errorMsg = `403 Forbidden - Access denied. This usually means:\n1. CORS is not properly configured\n2. Server is blocking the request\n3. Authentication required but not provided\n\nTry:\n- Make sure Flask server is running\n- Check CORS configuration in app.py\n- Verify you're accessing via http://localhost:8000/ not file://`;
+                    log('error', `❌ ${method} ${url} - 403 Forbidden`, errorMsg);
+                    alert('❌ 403 Forbidden Error\n\n' + errorMsg);
+                    return { success: false, error: '403 Forbidden', status: 403 };
+                }
+                
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    // If response is not JSON, get text instead
+                    data = { error: await response.text() || 'Unknown error' };
+                }
+                
+                if (response.ok) {
+                    log('success', `✅ ${method} ${url} - Success`, data);
+                    return { success: true, data, status: response.status };
+                } else {
+                    log('error', `❌ ${method} ${url} - Error (${response.status})`, data);
+                    return { success: false, data, status: response.status };
+                }
+            } catch (error) {
+                const errorMsg = error.message || 'Unknown network error';
+                let detailedMsg = `Network Error: ${errorMsg}\n\nPossible causes:\n1. Flask server is not running\n2. Wrong URL/port (current: ${url})\n3. CORS blocking the request\n4. Firewall blocking connection`;
+                
+                if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError')) {
+                    detailedMsg += '\n\nSolution: Make sure Flask server is running with:\n  python app.py';
+                }
+                
+                log('error', `❌ ${method} ${url} - Network Error`, errorMsg);
+                alert('❌ Network Error\n\n' + detailedMsg);
+                return { success: false, error: errorMsg };
+            }
+        }
+
+        // Authentication Functions
+        async function register() {
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+
+            if (!username || !password) {
+                alert('⚠️ Please enter both username and password');
+                return;
+            }
+
+            const result = await makeRequest(`${baseUrl}/register`, 'POST', { username, password });
+            
+            if (result.success) {
+                alert('✅ User registered successfully!');
+                document.getElementById('registerUsername').value = '';
+                document.getElementById('registerPassword').value = '';
+            } else {
+                alert(`❌ Registration failed: ${result.data.msg || 'Unknown error'}`);
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                alert('⚠️ Please enter both username and password');
+                return;
+            }
+
+            const result = await makeRequest(`${baseUrl}/login`, 'POST', { username, password });
+            
+            if (result.success && result.data.access_token) {
+                saveToken(result.data.access_token);
+                alert('✅ Login successful!');
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPassword').value = '';
+            } else {
+                alert(`❌ Login failed: ${result.data.msg || 'Unknown error'}`);
+            }
+        }
+
+        function logout() {
+            removeToken();
+            alert('👋 Logged out successfully');
+            log('info', 'User logged out');
+        }
+
+        // Task Functions
+        async function createTask() {
+            const title = document.getElementById('taskTitle').value;
+            const description = document.getElementById('taskDescription').value;
+            const priority = document.getElementById('taskPriority').value;
+            const deadline = document.getElementById('taskDeadline').value;
+
+            if (!title) {
+                alert('⚠️ Please enter a task title');
+                return;
+            }
+
+            const body = { title, description, priority };
+            if (deadline) {
+                body.deadline = deadline;
+            }
+
+            const result = await makeRequest(`${baseUrl}/tasks`, 'POST', body, true);
+            
+            if (result.success) {
+                alert('✅ Task created successfully!');
+                document.getElementById('taskTitle').value = '';
+                document.getElementById('taskDescription').value = '';
+                document.getElementById('taskPriority').value = 'Low';
+                document.getElementById('taskDeadline').value = '';
+            } else {
+                alert(`❌ Failed to create task: ${result.data.msg || 'Unknown error'}`);
+            }
+        }
+
+        async function getTasks() {
+            const result = await makeRequest(`${baseUrl}/tasks`, 'GET', null, true);
+            
+            if (result.success) {
+                const tasksList = document.getElementById('tasksList');
+                if (result.data.length === 0) {
+                    tasksList.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">No tasks found</p>';
+                } else {
+                    tasksList.innerHTML = result.data.map(task => {
+                        const overdueClass = task.overdue ? 'overdue' : '';
+                        const completedClass = task.status === 'Completed' ? 'completed' : '';
+                        const priorityClass = task.priority.toLowerCase();
+                        
+                        return `
+                            <div class="task-item ${overdueClass} ${completedClass}">
+                                <h4>${task.title}</h4>
+                                <p><strong>ID:</strong> ${task.id}</p>
+                                <p><strong>Status:</strong> ${task.status}</p>
+                                <p>
+                                    <span class="badge ${priorityClass}">${task.priority} Priority</span>
+                                    ${task.overdue ? '<span class="badge overdue">OVERDUE</span>' : ''}
+                                    ${task.status === 'Completed' ? '<span class="badge" style="background: #28a745; color: white;">COMPLETED</span>' : ''}
+                                </p>
+                                ${task.deadline ? `<p><strong>Deadline:</strong> ${task.deadline}</p>` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } else {
+                alert(`❌ Failed to fetch tasks: ${result.data.msg || 'Unknown error'}`);
+            }
+        }
+
+        async function updateTask() {
+            const taskId = document.getElementById('updateTaskId').value;
+            const status = document.getElementById('updateStatus').value;
+            const priority = document.getElementById('updatePriority').value;
+
+            if (!taskId) {
+                alert('⚠️ Please enter a task ID');
+                return;
+            }
+
+            const body = {};
+            if (status) body.status = status;
+            if (priority) body.priority = priority;
+
+            if (Object.keys(body).length === 0) {
+                alert('⚠️ Please select at least one field to update');
+                return;
+            }
+
+            const result = await makeRequest(`${baseUrl}/tasks/${taskId}`, 'PUT', body, true);
+            
+            if (result.success) {
+                alert('✅ Task updated successfully!');
+                document.getElementById('updateTaskId').value = '';
+                document.getElementById('updateStatus').value = '';
+                document.getElementById('updatePriority').value = '';
+            } else {
+                alert(`❌ Failed to update task: ${result.data.msg || 'Unknown error'}`);
+            }
+        }
+
+        async function deleteTask() {
+            const taskId = document.getElementById('deleteTaskId').value;
+
+            if (!taskId) {
+                alert('⚠️ Please enter a task ID');
+                return;
+            }
+
+            if (!confirm('⚠️ Are you sure you want to delete this task?')) {
+                return;
+            }
+
+            const result = await makeRequest(`${baseUrl}/tasks/${taskId}`, 'DELETE', null, true);
+            
+            if (result.success) {
+                alert('✅ Task deleted successfully!');
+                document.getElementById('deleteTaskId').value = '';
+            } else {
+                alert(`❌ Failed to delete task: ${result.data.msg || 'Unknown error'}`);
+            }
+        }
+
+        async function getDashboard() {
+            const result = await makeRequest(`${baseUrl}/dashboard`, 'GET', null, true);
+            
+            if (result.success) {
+                const stats = result.data;
+                const dashboardStats = document.getElementById('dashboardStats');
+                dashboardStats.innerHTML = `
+                    <div class="stat-card">
+                        <h3>${stats.total_tasks}</h3>
+                        <p>Total Tasks</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${stats.completed_tasks}</h3>
+                        <p>Completed Tasks</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${stats.overdue_tasks}</h3>
+                        <p>Overdue Tasks</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${stats.completion_rate}%</h3>
+                        <p>Completion Rate</p>
+                    </div>
+                `;
+            } else {
+                alert(`❌ Failed to fetch dashboard: ${result.data.msg || 'Unknown error'}`);
+            }
+        }
+
+        // Load token on page load
+        function loadToken() {
+            const token = getToken();
+            if (token) {
+                log('info', 'Token loaded from localStorage');
+            }
+        }
+
+        // Test connection to server
+        async function testConnection() {
+            log('info', `Testing connection to ${baseUrl}...`);
+            try {
+                const response = await fetch(`${baseUrl}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(`✅ Connection successful!\n\nServer: ${baseUrl}\nStatus: ${data.status}\nMessage: ${data.message}`);
+                    log('success', 'Connection test successful', data);
+                } else {
+                    alert(`❌ Connection failed!\n\nStatus: ${response.status}\nStatus Text: ${response.statusText}\n\nMake sure the Flask server is running on ${baseUrl}`);
+                    log('error', `Connection test failed - Status: ${response.status}`);
+                }
+            } catch (error) {
+                alert(`❌ Connection error!\n\nError: ${error.message}\n\nPossible issues:\n1. Flask server is not running\n2. Wrong port number\n3. Firewall blocking connection\n4. CORS issue\n\nTry:\n- Check if server is running: python app.py\n- Verify port in Flask app matches: ${baseUrl}`);
+                log('error', 'Connection test error', error.message);
+            }
+        }
+    </script>
+</body>
+</html>
